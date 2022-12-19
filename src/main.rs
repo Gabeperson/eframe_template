@@ -1,20 +1,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 use std::collections::VecDeque;
-use egui::{ScrollArea, TextStyle, FontId, Vec2};
+use egui::{ScrollArea, TextStyle, FontId, Vec2, FontDefinitions, FontData, FontFamily};
 
 
-/// We derive Deserialize/Serialize so we can persist app state on shutdown.
-#[derive(serde::Deserialize, serde::Serialize)]
-#[serde(default)] // if we add new fields, give them default values when deserializing old state
 
 struct TemplateApp {
     // Example stuff:
 
     // this how you opt-out of serialization of a member
-    #[serde(skip)]
     threadcount: String,
     width: String,
-    vector: VecDeque<String>,
     links: String,
 }
 
@@ -24,7 +19,6 @@ impl Default for TemplateApp {
             // Example stuff:
             threadcount: "20".to_owned(),
             width: "800".to_owned(),    
-            vector: VecDeque::new(),
             links: String::new(),
         }
     }
@@ -37,37 +31,45 @@ impl TemplateApp {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
-        // Load previous app state (if any).
-        // Note that you must enable the `persistence` feature for this to work.
-        if let Some(storage) = cc.storage {
-            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-        }
+        let mut fonts = FontDefinitions::default();
+
+        // Install my own font (maybe supporting non-latin characters):
+        fonts.font_data.insert("my_font".to_owned(),
+        FontData::from_static(include_bytes!("../font.ttf"))); // .ttf and .otf supported
+
+        // Put my font first (highest priority):
+        fonts.families.get_mut(&FontFamily::Proportional).unwrap()
+            .insert(0, "my_font".to_owned());
+
+        // Put my font as last fallback for monospace:
+        fonts.families.get_mut(&FontFamily::Monospace).unwrap()
+            .push("my_font".to_owned());
+
+        cc.egui_ctx.set_fonts(fonts);
 
         Default::default()
     }
 }
 
 impl eframe::App for TemplateApp {
-    /// Called by the frame work to save state before shutdown.
-    fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, eframe::APP_KEY, self);
-    }
-
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let Self { threadcount, width, vector, links} = self;
+        let Self { threadcount, width, links} = self;
 
         // Examples of how to create different panels and windows.
         // Pick whichever suits you.
         // Tip: a good default choice is to just keep the `CentralPanel`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
-
+        egui::TopBottomPanel::bottom("bottom").show(ctx, |ui| {
+            ui.label("");
+        });
 
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
+            ui.set_min_size(Vec2 {x: 400., y: 600.});
             let x = ui.style_mut();
             let mut fontid = FontId::default();
-            fontid.size *= 2.;
+            fontid.size *= 1.5;
             x.override_font_id = Some(fontid);
             ui.heading("Config");
 
@@ -85,16 +87,19 @@ impl eframe::App for TemplateApp {
             ui.separator();
             ui.vertical(|ui| {
                 ui.label("Links");
-                ui.text_edit_multiline(links);
+                let mut vec = ui.available_size();
+                vec.y *= 0.9;
+                ui.add_sized(vec, egui::TextEdit::multiline(links));
             });
             
-
+            ui.separator();
             //ui.add(egui::Slider::new(value, 1..=40).text("value"));
             if ui.button("Download").clicked() {
                 todo!();
             }
 
         });
+        
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
@@ -103,7 +108,7 @@ impl eframe::App for TemplateApp {
                 
             
             for text in (0..100).rev() {
-                ui.label(text.to_string());
+                ui.label("안녕하세요".to_owned() + &text.to_string()[..]);
 
 
                 egui::warn_if_debug_build(ui);
