@@ -129,6 +129,7 @@ fn main() {
 
     let mut native_options = eframe::NativeOptions::default();
     native_options.initial_window_size = Some(Vec2 { x: 1200., y: 700. });
+    
     eframe::run_native(
         "tk_oxidized",
         native_options,
