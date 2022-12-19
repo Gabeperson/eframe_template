@@ -4,6 +4,8 @@ use egui::{ScrollArea, TextStyle, FontId, Vec2, FontDefinitions, FontData, FontF
 
 
 
+
+static LEFTPANELWIDTH: f32 = 400.;
 struct TemplateApp {
     // Example stuff:
 
@@ -66,7 +68,7 @@ impl eframe::App for TemplateApp {
         });
 
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
-            ui.set_min_size(Vec2 {x: 400., y: 600.});
+            ui.set_min_size(Vec2 {x: LEFTPANELWIDTH, y: 600.});
             let x = ui.style_mut();
             let mut fontid = FontId::default();
             fontid.size *= 1.5;
@@ -94,7 +96,9 @@ impl eframe::App for TemplateApp {
             
             ui.separator();
             //ui.add(egui::Slider::new(value, 1..=40).text("value"));
-            if ui.button("Download").clicked() {
+            let mut size = Vec2::default();
+            size.x = LEFTPANELWIDTH;
+            if ui.add(egui::widgets::Button::new("Download").min_size(size)).clicked() {
                 todo!();
             }
 
